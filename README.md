@@ -14,6 +14,7 @@ Abrir: http://localhost:3000
 ```
 
 ✨ Features
+
 ✅ Login/Registro con bcrypt
 
 ✅ Dashboard responsive
