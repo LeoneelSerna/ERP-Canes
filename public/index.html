@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="login-box">
+    <h2 id="formTitle">Iniciar Sesión</h2>
+    <form id="loginForm">
+      <div class="input-group">
+        <input type="email" id="email" placeholder="tu@email.com" required>
+      </div>
+      <div class="input-group">
+        <input type="password" id="password" placeholder="Contraseña" required>
+      </div>
+      <button type="submit" id="submitBtn">Entrar</button>
+    </form>
+    <p class="message">
+      ¿No tienes cuenta? 
+      <a href="#" id="toggleRegister">Regístrate</a>
+    </p>
+    <div id="resultado"></div>
+  </div>
+
+<script>
+const form = document.getElementById('loginForm');
+const formTitle = document.getElementById('formTitle');
+const submitBtn = document.getElementById('submitBtn');
+const toggleRegister = document.getElementById('toggleRegister');
+const resultado = document.getElementById('resultado');
+
+let isLogin = true;
+
+toggleRegister.addEventListener('click', (e) => {
+    e.preventDefault();
+    isLogin = !isLogin;
+    formTitle.textContent = isLogin ? 'Iniciar Sesión' : 'Registro';
+    submitBtn.textContent = isLogin ? 'Entrar' : 'Registrarse';
+    toggleRegister.textContent = isLogin ? 'Regístrate' : 'Inicia sesión';
+    resultado.innerHTML = '';
+});
+
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+    
+    try {
+    const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value
+        })
+    });
+    
+    const data = await res.json();
+    
+    if (res.ok) {
+        if (isLogin) {
+        // LOGIN: Solo mensaje + dashboard inmediato
+        resultado.innerHTML = `<p class="success">${data.message}</p>`;
+        setTimeout(() => window.location.href = '/dashboard', 1500);
+        } else {
+        // REGISTRO: Mensaje + contador 5s → cambia a login
+        resultado.innerHTML = `
+            <p class="success">${data.message}</p>
+            <p class="success" id="countdown" style="font-size: 14px;">
+            Cambiando a login en <span id="timer">5</span> segundos...
+            </p>
+        `;
+        
+        let seconds = 5;
+        const timer = document.getElementById('timer');
+        const countdown = setInterval(() => {
+            seconds--;
+            timer.textContent = seconds;
+            
+            if (seconds <= 0) {
+            clearInterval(countdown);
+            toggleRegister.click(); // Cambiar a login
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+            resultado.innerHTML = '<p class="success">¡Ahora inicia sesión con tus datos!</p>';
+            }
+        }, 1000);
+        }
+    } else {
+        resultado.innerHTML = `<p class="error">${data.message}</p>`;
+    }
+    
+    } catch (error) {
+    resultado.innerHTML = '<p class="error">Error de conexión</p>';
+    console.error('Error:', error);
+    }
+});
+</script>
+    
+    
+</body>
+</html>

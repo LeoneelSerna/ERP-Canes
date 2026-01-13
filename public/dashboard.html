@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="dashboard-container">
+    <div class="welcome-card">
+      <h1 class="dashboard-title">¡Bienvenido!</h1>
+      <p class="user-email" id="userEmail">Cargando...</p>
+      <p class="dashboard-subtitle">Gestiona tu cuenta y actividades</p>
+    </div>
+    
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-number" id="userId">0</span>
+        <div class="stat-label">ID Usuario</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number" id="totalUsers">-</span>
+        <div class="stat-label">Total Usuarios</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number" id="sessionTime">0</span>
+        <div class="stat-label">Sesión Activa</div>
+      </div>
+    </div>
+    
+    <div class="logout-section">
+      <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+    </div>
+  </div>
+
+  <script>
+    async function loadDashboardData() {
+      try {
+        const res = await fetch('/api/auth/users');
+        const data = await res.json();
+        
+        const sessionRes = await fetch('/api/session');
+        const session = await sessionRes.json();
+        
+        document.getElementById('userEmail').textContent = session.email;
+        document.getElementById('userId').textContent = session.id.slice(-6) || 'N/A';
+        document.getElementById('totalUsers').textContent = data.count;
+        document.getElementById('sessionTime').textContent = 'Activa ✓';
+        
+      } catch (error) {
+        console.error('Error dashboard:', error);
+      }
+    }
+    
+    async function logout() {
+      try {
+        await fetch('/api/auth/logout', { method: 'POST' });
+        window.location.href = '/';
+      } catch (error) {
+        alert('Error al cerrar sesión');
+      }
+    }
+    
+    loadDashboardData();
+    setInterval(loadDashboardData, 30000);
+  </script>
+</body>
+</html>
