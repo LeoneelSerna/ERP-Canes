@@ -703,11 +703,6 @@
     text-align: left;
   }
 }
-/* ADMIN - CLASES FALTANTES */
-.admin-nav, .admin-container, .admin-header, .filtros, .search-bar,
-.tabla-header, .tabla-row, .celda-nombre, .badge, .btn-small {
-  /* Copia todo el CSS admin que te di antes */
-}
 
 /* RÁPIDO temporal */
 .admin-nav, .admin-container { padding: 1rem; background: #16213e; color: #fff; }
