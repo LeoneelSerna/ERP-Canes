@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin K9 - ERP Canes</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="admin-nav">
+    <div class="nav-left">
+        <h2>🐕 ERP K9 Admin <span id="totalGlobal" style="color: #4ecca3;">0</span></h2>
+      </div>
+      
+    <div class="nav-right">
+      <a href="/dashboard" class="nav-link">📊 Dashboard</a>
+      <button onclick="logout()" class="logout-btn">🚪 Salir</button>
+    </div>
+  </nav>
+
+  <div class="admin-container">
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="cambiarTab('perros')">🐕 Perros</button>
+      <button class="tab-btn" onclick="cambiarTab('entrenamientos')">📚 Entrenamientos</button>
+      <button class="tab-btn" onclick="cambiarTab('vacunas')">💉 Vacunas</button>
+    </div>
+
+    <!-- Contenido Perros -->
+    <div id="tab-perros" class="tab-content active">
+      <div class="admin-header">
+        <h3>Lista de Perros</h3>
+        <button onclick="abrirModal('nuevo')" class="btn-primary">➕ Nuevo Perro</button>
+      </div>
+      
+      <div class="search-bar">
+        <input type="text" id="buscarPerro" placeholder="Buscar por nombre o microchip..." oninput="filtrarPerros()">
+        <select id="filtroUbicacion" onchange="filtrarPerros()">
+          <option value="">Todas ubicaciones</option>
+          <option value="Tijuana">Tijuana</option>
+          <option value="Chihuahua">Chihuahua</option>
+        </select>
+      </div>
+      
+      <div id="listaPerros" class="admin-table">
+        <!-- Se llena con JS -->
+      </div>
+    </div>
+  </div>
+
+<!-- Modal Nuevo Perro (OCULTO por default) -->
+<div id="modalNuevoPerro" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>➕ Nuevo Perro K9</h3>
+        <button onclick="cerrarModal()" class="close-btn">&times;</button>
+      </div>
+      
+      <form id="formNuevoPerro">
+        <div class="input-group">
+          <label>Microchip *</label>
+          <input type="text" id="microchip" required maxlength="50">
+        </div>
+        
+        <div class="input-group">
+          <label>Nombre *</label>
+          <input type="text" id="nombre" required maxlength="100">
+        </div>
+        
+        <div class="input-group">
+          <label>Raza</label>
+          <input type="text" id="raza" maxlength="100">
+        </div>
+        
+        <div class="input-row">
+          <div class="input-group">
+            <label>Fecha Nacimiento</label>
+            <input type="date" id="fecha_nac">
+          </div>
+          <div class="input-group">
+            <label>Sexo</label>
+            <select id="sexo">
+              <option value="">Seleccionar</option>
+              <option value="M">Macho</option>
+              <option value="H">Hembra</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="input-row">
+          <div class="input-group">
+            <label>Especialidad</label>
+            <select id="especialidad" required>
+              <option value="">Seleccionar</option>
+              <option value="verde">Verde</option>
+              <option value="narcoticos">Narcóticos</option>
+              <option value="explosivos">Explosivos</option>
+              <option value="cadaver">Cadáver</option>
+              <option value="doble">Doble</option>
+              <option value="otros">Otros</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>Ubicación *</label>
+            <select id="ubicacion" required>
+              <option value="">Seleccionar</option>
+              <option value="Toluca">Toluca</option>
+              <option value="Chihuahua">Chihuahua</option>
+              <option value="Tijuana">Tijuana</option>
+              <option value="NMK9">NMK9</option>
+              <option value="Servicio">Servicio</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="input-group">
+          <label>Inventario *</label>
+          <select id="inventario" required>
+            <option value="">Seleccionar</option>
+            <option value="entrenamiento">Entrenamiento</option>
+            <option value="servicio">Servicio</option>
+            <option value="donacion">Donación</option>
+            <option value="venta">Venta</option>
+          </select>
+        </div>
+        
+        <div class="input-group">
+          <label>Notas</label>
+          <textarea id="notas" rows="3" maxlength="1000"></textarea>
+        </div>
+        
+        <div class="modal-actions">
+          <button type="button" onclick="cerrarModal()" class="btn-cancel">Cancelar</button>
+          <button type="submit" class="logout-btn">💾 Guardar Perro</button>
+        </div>
+      </form>
+    </div>
+  </div>
+    <!-- Tu modal anterior aquí -->
+  </div>
+  <script>
+    let todosLosPerros = [];
+    let perrosFiltrados = [];
+    
+    // CARGAR PERROS
+    async function cargarPerros() {
+      try {
+        console.log('🌐 Fetching perros...');
+        const API_URL = window.location.origin + '/api/perros';
+        console.log('URL:', API_URL);
+        
+        const res = await fetch(API_URL);
+        console.log('Status:', res.status);
+        
+        const data = await res.json();
+        console.log('📊 Data completa:', data);
+        console.log('📊 data.data:', data.data);
+        
+        todosLosPerros = data.data || [];
+        perrosFiltrados = [...todosLosPerros];
+        
+        console.log('✅ Total perros:', todosLosPerros.length);
+        
+        const totalEl = document.getElementById('totalGlobal');
+        if (totalEl) totalEl.textContent = todosLosPerros.length;
+        
+        renderizarTabla();
+      } catch (error) {
+        console.error('💥 ERROR:', error);
+        document.getElementById('listaPerros').innerHTML = 
+          `<div style="color:#ff6b6b;padding:2rem;">❌ Error: ${error.message}</div>`;
+      }
+    }
+    
+    // RENDERIZAR TABLA
+    function renderizarTabla() {
+      const lista = document.getElementById('listaPerros');
+      
+      console.log('📋 Renderizando', perrosFiltrados.length, 'perros');
+      
+      if (perrosFiltrados.length === 0) {
+        lista.innerHTML = '<div style="text-align:center;padding:3rem;color:#ff6b6b;">🐕 No hay perros (o no se cargaron)</div>';
+        return;
+      }
+      
+      lista.innerHTML = `
+        <div class="tabla-header">
+          <div>Nombre / Microchip</div>
+          <div>Raza</div>
+          <div>Ubicación</div>
+          <div>Estado</div>
+          <div>Acciones</div>
+        </div>
+        ${perrosFiltrados.map(perro => `
+          <div class="tabla-row">
+            <div class="celda-nombre">
+              <strong>${perro.nombre}</strong><br>
+              <small>${perro.microchip}</small>
+            </div>
+            <div>${perro.raza || '-'}</div>
+            <div><span class="badge">${perro.ubicacion}</span></div>
+            <div><span class="badge">${perro.inventario}</span></div>
+            <div>
+              <button onclick="editarPerro('${perro.microchip}')" class="btn-small btn-edit">✏️</button>
+              <button onclick="eliminarPerro('${perro.microchip}')" class="btn-small btn-delete">🗑️</button>
+            </div>
+          </div>
+        `).join('')}
+      `;
+    }
+    
+    // FILTROS
+    function filtrarPerros() {
+      const busqueda = document.getElementById('buscarPerro').value.toLowerCase();
+      const ubicacion = document.getElementById('filtroUbicacion').value;
+      
+      perrosFiltrados = todosLosPerros.filter(perro => {
+        const matchBusqueda = perro.nombre.toLowerCase().includes(busqueda) ||
+                              perro.microchip.toLowerCase().includes(busqueda);
+        const matchUbicacion = !ubicacion || perro.ubicacion === ubicacion;
+        return matchBusqueda && matchUbicacion;
+      });
+      
+      renderizarTabla();
+    }
+    
+    // MODAL
+    function abrirModal(modo = 'nuevo') {
+      document.getElementById('modalNuevoPerro').style.display = 'flex';
+    }
+    
+    function cerrarModal() {
+      document.getElementById('modalNuevoPerro').style.display = 'none';
+      document.getElementById('formNuevoPerro').reset();
+    }
+    
+    // FORM SUBMIT
+    document.getElementById('formNuevoPerro').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = {
+        microchip: document.getElementById('microchip').value.trim(),
+        nombre: document.getElementById('nombre').value.trim(),
+        raza: document.getElementById('raza').value || null,
+        fecha_nac: document.getElementById('fecha_nac').value || null,
+        sexo: document.getElementById('sexo').value || null,
+        especialidad: document.getElementById('especialidad').value || null,
+        ubicacion: document.getElementById('ubicacion').value,
+        inventario: document.getElementById('inventario').value,
+        notas: document.getElementById('notas').value.trim() || null
+      };
+      
+      try {
+        const res = await fetch(window.location.origin + '/api/perros', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+        
+        if (res.ok) {
+          alert('✅ Perro creado!');
+          cerrarModal();
+          cargarPerros();
+        } else {
+          const error = await res.json();
+          alert('❌ ' + error.error);
+        }
+      } catch (error) {
+        alert('❌ ' + error.message);
+      }
+    });
+    
+    // BOTONES
+    function editarPerro(microchip) {
+      alert('Editar: ' + microchip + ' - Próximamente');
+    }
+    
+    function eliminarPerro(microchip) {
+      if (confirm(`🗑️ Eliminar ${microchip}?`)) {
+        fetch(window.location.origin + `/api/perros/${microchip}`, { method: 'DELETE' })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              alert('✅ Eliminado');
+              cargarPerros();
+            }
+          });
+      }
+    }
+    
+    function logout() {
+      fetch('/api/auth/logout', { method: 'POST' })
+        .then(() => window.location.href = '/');
+    }
+    
+    // INICIO
+    cargarPerros();
+    </script>
+    
+</body>
+</html>

@@ -39,3 +39,26 @@ app.get('/dashboard', (req, res) => {
 app.listen(port, () => {
   console.log(`Servidor en http://localhost:${port}`);
 });
+// API Perros K9
+app.use('/api/perros', require('./routes/api/perros'));
+
+// Test conexión DB
+app.get('/api/test-db', async (req, res) => {
+  const pool = require('./models/database');
+  try {
+    const connection = await pool.getConnection();
+    await connection.ping();
+    connection.release();
+    res.json({ success: true, message: 'MySQL ics_k9 conectado ✅' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Admin panel PROTEGIDO
+app.get('/admin', (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/');
+  }
+  res.sendFile(__dirname + '/public/admin.html');
+});

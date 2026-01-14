@@ -12,6 +12,11 @@
       <h1 class="dashboard-title">¡Bienvenido!</h1>
       <p class="user-email" id="userEmail">Cargando...</p>
       <p class="dashboard-subtitle">Gestiona tu cuenta y actividades</p>
+      <div style="margin: 2rem 0;">
+        <a href="/admin" class="btn-admin">
+          🛠️ Ir a Admin Panel
+        </a>
+      </div>
     </div>
     
     <div class="stats-grid">
@@ -32,8 +37,123 @@
     <div class="logout-section">
       <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
     </div>
+  
+  <!-- Sección Perros -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-number" id="totalPerros">0</span>
+      <div class="stat-label">Total Perros</div>
+    </div>
   </div>
+  </div>
+  <!-- Gestión Perros K9 -->
+<section class="welcome-card" style="margin-top: 2rem;">
+  <h3>🐕 Gestión Perros K9</h3>
+  
+  <div style="display: flex; gap: 1rem; margin: 1rem 0;">
+    <button onclick="listarPerros()" class="logout-btn" style="padding: 10px 20px;">
+      📋 Listar Perros
+    </button>
+    <button onclick="nuevoPerro()" class="logout-btn" style="padding: 10px 20px; background: #4ecca3;">
+      ➕ Nuevo Perro
+    </button>
+  </div>
+  
+  <div id="perros-lista" style="margin-top: 1rem;"></div>
+</section>
 
+</div>
+
+<!-- Modal Nuevo Perro (OCULTO por default) -->
+<div id="modalNuevoPerro" class="modal-overlay" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>➕ Nuevo Perro K9</h3>
+      <button onclick="cerrarModal()" class="close-btn">&times;</button>
+    </div>
+    
+    <form id="formNuevoPerro">
+      <div class="input-group">
+        <label>Microchip *</label>
+        <input type="text" id="microchip" required maxlength="50">
+      </div>
+      
+      <div class="input-group">
+        <label>Nombre *</label>
+        <input type="text" id="nombre" required maxlength="100">
+      </div>
+      
+      <div class="input-group">
+        <label>Raza</label>
+        <input type="text" id="raza" maxlength="100">
+      </div>
+      
+      <div class="input-row">
+        <div class="input-group">
+          <label>Fecha Nacimiento</label>
+          <input type="date" id="fecha_nac">
+        </div>
+        <div class="input-group">
+          <label>Sexo</label>
+          <select id="sexo">
+            <option value="">Seleccionar</option>
+            <option value="M">Macho</option>
+            <option value="H">Hembra</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="input-row">
+        <div class="input-group">
+          <label>Especialidad</label>
+          <select id="especialidad" required>
+            <option value="">Seleccionar</option>
+            <option value="verde">Verde</option>
+            <option value="narcoticos">Narcóticos</option>
+            <option value="explosivos">Explosivos</option>
+            <option value="cadaver">Cadáver</option>
+            <option value="doble">Doble</option>
+            <option value="otros">Otros</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Ubicación *</label>
+          <select id="ubicacion" required>
+            <option value="">Seleccionar</option>
+            <option value="Toluca">Toluca</option>
+            <option value="Chihuahua">Chihuahua</option>
+            <option value="Tijuana">Tijuana</option>
+            <option value="NMK9">NMK9</option>
+            <option value="Servicio">Servicio</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="input-group">
+        <label>Inventario *</label>
+        <select id="inventario" required>
+          <option value="">Seleccionar</option>
+          <option value="entrenamiento">Entrenamiento</option>
+          <option value="servicio">Servicio</option>
+          <option value="donacion">Donación</option>
+          <option value="venta">Venta</option>
+        </select>
+      </div>
+      
+      <div class="input-group">
+        <label>Notas</label>
+        <textarea id="notas" rows="3" maxlength="1000"></textarea>
+      </div>
+      
+      <div class="modal-actions">
+        <button type="button" onclick="cerrarModal()" class="btn-cancel">Cancelar</button>
+        <button type="submit" class="logout-btn">💾 Guardar Perro</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!--Scripts a Ejecutar-->
   <script>
     async function loadDashboardData() {
       try {
@@ -64,6 +184,92 @@
     
     loadDashboardData();
     setInterval(loadDashboardData, 30000);
+    //Bloque Lista perros
+    async function cargarPerros() {
+      const res = await fetch('/api/perros');
+      const data = await res.json();
+      document.getElementById('totalPerros').textContent = data.data?.length || 0;
+    }
+
+    let perrosData = [];
+
+    async function listarPerros() {
+      try {
+        const res = await fetch('/api/perros');
+        perrosData = await res.json();
+        
+        const lista = document.getElementById('perros-lista');
+        lista.innerHTML = `
+          <h4>📊 ${perrosData.data?.length || 0} perros registrados</h4>
+          <div style="display: grid; gap: 1rem; margin-top: 1rem;">
+            ${perrosData.data?.map(perro => `
+              <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #e94560;">
+                <strong>${perro.nombre}</strong> (${perro.microchip})<br>
+                <small>${perro.raza} • ${perro.ubicacion} • ${perro.inventario}</small>
+                <br><small>${perro.notas || 'Sin notas'}</small>
+              </div>
+            `).join('') || '<p>No hay perros</p>'}
+          </div>
+        `;
+      } catch (error) {
+        document.getElementById('perros-lista').innerHTML = `<p style="color: #ff6b6b;">❌ Error: ${error.message}</p>`;
+      }
+    }
+
+    function abrirModal() {
+      document.getElementById('modalNuevoPerro').style.display = 'flex';
+    }
+
+    function cerrarModal() {
+      document.getElementById('modalNuevoPerro').style.display = 'none';
+      document.getElementById('formNuevoPerro').reset();
+    }
+
+    document.getElementById('formNuevoPerro').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = {
+        microchip: document.getElementById('microchip').value,
+        nombre: document.getElementById('nombre').value,
+        raza: document.getElementById('raza').value,
+        fecha_nac: document.getElementById('fecha_nac').value,
+        color: '',
+        sexo: document.getElementById('sexo').value,
+        especialidad: document.getElementById('especialidad').value,
+        ubicacion: document.getElementById('ubicacion').value,
+        inventario: document.getElementById('inventario').value,
+        notas: document.getElementById('notas').value
+      };
+      
+      try {
+        const res = await fetch('/api/perros', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+        
+        if (res.ok) {
+          alert('✅ Perro creado exitosamente!');
+          cerrarModal();
+          listarPerros();// Recargar listas
+          cargarPerros();// Recargar listas
+        } else {
+          const error = await res.json();
+          alert('❌ Error: ' + error.error);
+        }
+      } catch (error) {
+        alert('❌ Error conexión: ' + error.message);
+      }
+    });
+
+    function nuevoPerro() {
+      abrirModal();
+    }
+
+
+    // Cargar al iniciar
+    listarPerros();
+    cargarPerros();
   </script>
 </body>
 </html>
