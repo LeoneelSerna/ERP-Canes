@@ -31,72 +31,91 @@ const formTitle = document.getElementById('formTitle');
 const submitBtn = document.getElementById('submitBtn');
 const toggleRegister = document.getElementById('toggleRegister');
 const resultado = document.getElementById('resultado');
+const emailInput = document.getElementById('email');
+const passwordInput = document.getElementById('password');
 
 let isLogin = true;
 
+function setMode(loginMode) {
+  isLogin = loginMode;
+  formTitle.textContent = isLogin ? 'Iniciar Sesión' : 'Registro';
+  submitBtn.textContent = isLogin ? 'Entrar' : 'Registrarse';
+  toggleRegister.textContent = isLogin ? 'Regístrate' : 'Inicia sesión';
+  resultado.innerHTML = '';
+}
+
+function resetForm() {
+  emailInput.value = '';
+  passwordInput.value = '';
+}
+
 toggleRegister.addEventListener('click', (e) => {
-    e.preventDefault();
-    isLogin = !isLogin;
-    formTitle.textContent = isLogin ? 'Iniciar Sesión' : 'Registro';
-    submitBtn.textContent = isLogin ? 'Entrar' : 'Registrarse';
-    toggleRegister.textContent = isLogin ? 'Regístrate' : 'Inicia sesión';
-    resultado.innerHTML = '';
+  e.preventDefault();
+  setMode(!isLogin);
 });
 
 form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-    
-    try {
+  e.preventDefault();
+
+  const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+  const payload = {
+    email: emailInput.value.trim(),
+    password: passwordInput.value.trim()
+  };
+
+  resultado.innerHTML = '<p class="info">Procesando...</p>';
+
+  try {
     const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-        email: document.getElementById('email').value,
-        password: document.getElementById('password').value
-        })
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     });
-    
-    const data = await res.json();
-    
+
+    let data = {};
+    try {
+      data = await res.json();
+    } catch {
+      data = { message: 'Respuesta inválida del servidor' };
+    }
+
     if (res.ok) {
-        if (isLogin) {
-        // LOGIN: Solo mensaje + dashboard inmediato
-        resultado.innerHTML = `<p class="success">${data.message}</p>`;
-        setTimeout(() => window.location.href = '/dashboard', 1500);
-        } else {
-        // REGISTRO: Mensaje + contador 5s → cambia a login
+      if (isLogin) {
+        resultado.innerHTML = `<p class="success">${data.message || 'Login exitoso'}</p>`;
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1500);
+      } else {
         resultado.innerHTML = `
-            <p class="success">${data.message}</p>
-            <p class="success" id="countdown" style="font-size: 14px;">
+          <p class="success">${data.message || 'Registro exitoso'}</p>
+          <p class="success" id="countdown" style="font-size: 14px;">
             Cambiando a login en <span id="timer">5</span> segundos...
-            </p>
+          </p>
         `;
-        
+
         let seconds = 5;
         const timer = document.getElementById('timer');
         const countdown = setInterval(() => {
-            seconds--;
-            timer.textContent = seconds;
-            
-            if (seconds <= 0) {
+          seconds--;
+          timer.textContent = seconds;
+
+          if (seconds <= 0) {
             clearInterval(countdown);
-            toggleRegister.click(); // Cambiar a login
-            document.getElementById('email').value = '';
-            document.getElementById('password').value = '';
+            setMode(true); // cambiar a login
+            resetForm();
             resultado.innerHTML = '<p class="success">¡Ahora inicia sesión con tus datos!</p>';
-            }
+          }
         }, 1000);
-        }
+      }
     } else {
-        resultado.innerHTML = `<p class="error">${data.message}</p>`;
+      resultado.innerHTML = `<p class="error">${data.message || 'Ocurrió un error'}</p>`;
     }
-    
-    } catch (error) {
-    resultado.innerHTML = '<p class="error">Error de conexión</p>';
+  } catch (error) {
     console.error('Error:', error);
-    }
+    resultado.innerHTML = '<p class="error">Error de conexión</p>';
+  }
 });
+
 </script>
     
     

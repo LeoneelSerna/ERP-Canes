@@ -7,16 +7,21 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- Loader -->
+  <div id="pageLoader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f1419; display: flex; align-items: center; justify-content: center; z-index: 9999;">
+    <div style="color: #4ecca3; font-size: 1.5rem;">⏳ Cargando...</div>
+  </div>
+
   <nav class="admin-nav">
     <div class="nav-left">
-        <h2>🐕 ERP K9 Admin <span id="totalGlobal" style="color: #4ecca3;">0</span></h2>
-      </div>
-      
-    <div class="nav-right">
-      <a href="/dashboard" class="nav-link">📊 Dashboard</a>
-      <button onclick="logout()" class="logout-btn">🚪 Salir</button>
+      <h2 style="color: #4ecca3; margin: 0;">🐕 ERP K9 Admin</h2>
     </div>
-  </nav>
+    
+    <div class="nav-right">
+      <a href="/dashboard" class="nav-btn nav-dashboard">Dashboard</a>
+      <button onclick="logout()" class="nav-btn nav-btn-logout">Salir</button>
+    </div>
+  </nav>  
 
   <div class="admin-container">
     <!-- Tabs -->
@@ -34,8 +39,8 @@
       </div>
       
       <div class="search-bar">
-        <input type="text" id="buscarPerro" placeholder="Buscar por nombre o microchip..." oninput="filtrarPerros()">
-        <select id="filtroUbicacion" onchange="filtrarPerros()">
+        <input type="text" id="buscarPerro" placeholder="Buscar por nombre o microchip...">
+        <select id="filtroUbicacion">
           <option value="">Todas ubicaciones</option>
           <option value="Tijuana">Tijuana</option>
           <option value="Chihuahua">Chihuahua</option>
@@ -172,58 +177,66 @@
       }
     }
     
-    // RENDERIZAR TABLA
-    function renderizarTabla() {
-      const lista = document.getElementById('listaPerros');
-      
-      console.log('📋 Renderizando', perrosFiltrados.length, 'perros');
-      
-      if (perrosFiltrados.length === 0) {
-        lista.innerHTML = '<div style="text-align:center;padding:3rem;color:#ff6b6b;">🐕 No hay perros (o no se cargaron)</div>';
-        return;
-      }
-      
-      lista.innerHTML = `
-        <div class="tabla-header">
-          <div>Nombre / Microchip</div>
-          <div>Raza</div>
-          <div>Ubicación</div>
-          <div>Estado</div>
-          <div>Acciones</div>
-        </div>
-        ${perrosFiltrados.map(perro => `
-          <div class="tabla-row">
-            <div class="celda-nombre">
-              <strong>${perro.nombre}</strong><br>
-              <small>${perro.microchip}</small>
-            </div>
-            <div>${perro.raza || '-'}</div>
-            <div><span class="badge">${perro.ubicacion}</span></div>
-            <div><span class="badge">${perro.inventario}</span></div>
-            <div>
-              <button onclick="editarPerro('${perro.microchip}')" class="btn-small btn-edit">✏️</button>
-              <button onclick="eliminarPerro('${perro.microchip}')" class="btn-small btn-delete">🗑️</button>
-            </div>
+// Variable global para controlar animación
+let renderTimeout = null;
+
+function renderizarTabla() {
+  const lista = document.getElementById('listaPerros');
+  
+  // GUARDAR SCROLL INTERNO del contenedor
+  const scrollTop = lista.scrollTop;
+  
+  console.log('📋 Renderizando', perrosFiltrados.length, 'perros');
+  
+  if (perrosFiltrados.length === 0) {
+    lista.innerHTML = '<div style="text-align:center;padding:3rem;color:#ff6b6b;">🐕 No hay perros registrados</div>';
+  } else {
+    lista.innerHTML = `
+      <div class="tabla-header">
+        <div>Nombre / Microchip</div>
+        <div>Raza</div>
+        <div>Ubicación</div>
+        <div>Estado</div>
+        <div>Acciones</div>
+      </div>
+      ${perrosFiltrados.map(perro => `
+        <div class="tabla-row">
+          <div class="celda-nombre">
+            <strong>${perro.nombre}</strong><br>
+            <small>${perro.microchip}</small>
           </div>
-        `).join('')}
-      `;
-    }
+          <div>${perro.raza || '-'}</div>
+          <div><span class="badge">${perro.ubicacion}</span></div>
+          <div><span class="badge">${perro.inventario}</span></div>
+          <div>
+            <button onclick="editarPerro('${perro.microchip}')" class="btn-small btn-edit">✏️</button>
+            <button onclick="eliminarPerro('${perro.microchip}')" class="btn-small btn-delete">🗑️</button>
+          </div>
+        </div>
+      `).join('')}
+    `;
+  }
+  
+  // RESTAURAR SCROLL DEL CONTENEDOR
+  lista.scrollTop = scrollTop;
+}
+
     
     // FILTROS
     function filtrarPerros() {
-      const busqueda = document.getElementById('buscarPerro').value.toLowerCase();
-      const ubicacion = document.getElementById('filtroUbicacion').value;
-      
-      perrosFiltrados = todosLosPerros.filter(perro => {
-        const matchBusqueda = perro.nombre.toLowerCase().includes(busqueda) ||
-                              perro.microchip.toLowerCase().includes(busqueda);
-        const matchUbicacion = !ubicacion || perro.ubicacion === ubicacion;
-        return matchBusqueda && matchUbicacion;
-      });
-      
-      renderizarTabla();
-    }
-    
+  const busqueda = document.getElementById('buscarPerro').value.toLowerCase();
+  const ubicacion = document.getElementById('filtroUbicacion').value;
+  
+  perrosFiltrados = todosLosPerros.filter(perro => {
+    const matchBusqueda = perro.nombre.toLowerCase().includes(busqueda) ||
+                          perro.microchip.toLowerCase().includes(busqueda);
+    const matchUbicacion = !ubicacion || perro.ubicacion === ubicacion;
+    return matchBusqueda && matchUbicacion;
+  });
+  
+  renderizarTabla();
+}
+ 
     // MODAL
     function abrirModal(modo = 'nuevo') {
       document.getElementById('modalNuevoPerro').style.display = 'flex';
@@ -295,6 +308,30 @@
     
     // INICIO
     cargarPerros();
+    // Event listeners sin causar saltos
+    document.getElementById('buscarPerro').addEventListener('input', function() {
+      filtrarPerros();
+    });
+
+    document.getElementById('filtroUbicacion').addEventListener('change', function(e) {
+      // Prevenir scroll automático del select
+      const scrollY = window.scrollY;
+      filtrarPerros();
+      window.scrollTo(0, scrollY);
+    });
+
+
+    // Spinner
+    window.addEventListener('load', () => {
+    setTimeout(() => {
+      document.getElementById('pageLoader').style.opacity = '0';
+      document.getElementById('pageLoader').style.transition = 'opacity 0.3s ease';
+    
+    setTimeout(() => {
+      document.getElementById('pageLoader').style.display = 'none';
+        }, 250);  // espera a que termine la transición
+      }, 1500);  // 2.5 segundos (ajusta a 2000 o 3000 si quieres)
+    });
     </script>
     
 </body>
