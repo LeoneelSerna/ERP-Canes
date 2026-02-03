@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perfil K9</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="/js/common.js"></script>
+</head>
+<body>
+  <div class="perfil-wrapper">
+    <div class="perfil-card">
+      <div class="perfil-header-k9">
+        <button class="perfil-back-btn" onclick="history.back()">← Volver</button>
+        <span class="perfil-tag">Perfil K9</span>
+      </div>
+
+      <div class="perfil-main">
+        <div class="perfil-avatar">
+            <!-- Si hay foto, mostrarla; sino, círculo con inicial -->
+            <div id="perfilAvatarContainer" class="perfil-avatar-circle">
+              <span id="perfilInicial">K9</span>
+            </div>
+          <p class="perfil-microchip" id="perfilMicrochip"></p>
+        </div>
+
+        <div class="perfil-info">
+          <h1 id="perfilNombre"></h1>
+          <p class="perfil-raza" id="perfilRaza"></p>
+
+          <div class="perfil-badges">
+            <span class="badge badge-ubicacion" id="badgeUbicacion"></span>
+            <span class="badge badge-inventario" id="badgeInventario"></span>
+            <span class="badge badge-especialidad" id="badgeEspecialidad"></span>
+          </div>
+
+          <div class="perfil-grid">
+            <div class="perfil-item">
+              <span class="perfil-label">Fecha nacimiento</span>
+              <span class="perfil-value" id="perfilFechaNac"></span>
+            </div>
+            <div class="perfil-item">
+              <span class="perfil-label">Sexo</span>
+              <span class="perfil-value" id="perfilSexo"></span>
+            </div>
+            <div class="perfil-item">
+              <span class="perfil-label">Color</span>
+              <span class="perfil-value" id="perfilColor"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="perfil-notas">
+        <h3>Notas</h3>
+        <p id="perfilNotas"></p>
+      </div>
+
+      <div class="perfil-secciones">
+        <div class="perfil-section">
+          <h3>Entrenamientos</h3>
+          <div id="perfilEntrenamientos" class="perfil-lista"></div>
+        </div>
+        <div class="perfil-section">
+          <h3>Vacunas</h3>
+          <div id="perfilVacunas" class="perfil-lista"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- Lightbox para ver foto en grande -->
+    <div id="lightbox" class="lightbox" style="display: none;" onclick="cerrarLightbox()">
+        <span class="lightbox-close">&times;</span>
+        <img id="lightboxImg" class="lightbox-content" src="" alt="">
+        <div class="lightbox-caption" id="lightboxCaption"></div>
+    </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const microchip = params.get('microchip');
+
+    if (!microchip) {
+      document.body.innerHTML = '<p style="padding:2rem; text-align:center;">⚠️ Falta microchip en la URL</p>';
+    } else {
+      fetch(`/api/perros/${encodeURIComponent(microchip)}`)
+        .then(r => r.json())
+        .then(data => {
+          if (!data.success) {
+            document.body.innerHTML = '<p style="padding:2rem; text-align:center;">' + (data.error || 'Error cargando perro') + '</p>';
+            return;
+          }
+          
+          const { perro, entrenamientos, vacunas } = data;
+
+          document.getElementById('perfilNombre').textContent = perro.nombre;
+          document.getElementById('perfilMicrochip').textContent = perro.microchip;
+          document.getElementById('perfilRaza').textContent = [perro.raza, perro.ubicacion].filter(Boolean).join(' • ') || 'N/D';
+          document.getElementById('perfilFechaNac').textContent = perro.fecha_nac_fmt || 'N/D';
+          document.getElementById('perfilSexo').textContent = perro.sexo || 'N/D';
+          document.getElementById('perfilColor').textContent = perro.color || 'N/D';
+          document.getElementById('perfilNotas').textContent = perro.notas || 'Sin notas';
+          document.getElementById('perfilInicial').textContent = (perro.nombre || 'K9').charAt(0).toUpperCase();
+          document.getElementById('badgeUbicacion').textContent = perro.ubicacion || 'Sin ubicación';
+          document.getElementById('badgeInventario').textContent = perro.inventario || 'Sin inventario';
+          document.getElementById('badgeEspecialidad').textContent = perro.especialidad || 'Sin especialidad';
+        // Foto del perro
+          const avatarContainer = document.getElementById('perfilAvatarContainer');
+            if (perro.foto) {
+            // Si tiene foto, mostrarla con click para ampliar
+            avatarContainer.innerHTML = `
+                <img 
+                src="${perro.foto}" 
+                alt="${perro.nombre}" 
+                style="
+                    width: 100%; 
+                    height: 100%; 
+                    object-fit: cover; 
+                    border-radius: 50%;
+                    cursor: pointer;
+                    transition: transform 0.2s;
+                "
+                onclick="abrirLightbox('${perro.foto}', '${perro.nombre}')"
+                onmouseover="this.style.transform='scale(1.05)'"
+                onmouseout="this.style.transform='scale(1)'"
+                >
+            `;
+            } else {
+            // Sino, mostrar inicial
+            document.getElementById('perfilInicial').textContent = 
+                (perro.nombre || 'K9').charAt(0).toUpperCase();
+            }
+
+          // Entrenamientos
+          const contEnt = document.getElementById('perfilEntrenamientos');
+          contEnt.innerHTML = !entrenamientos.length 
+            ? '<p class="perfil-empty">Sin entrenamientos registrados</p>'
+            : entrenamientos.map(e => `
+                <div class="perfil-item-row">
+                  <div>
+                    <strong>${e.tipo || 'Sesión'}</strong>
+                    <small>${e.fecha || ''}</small>
+                  </div>
+                  <p>${e.notas || ''}</p>
+                </div>
+              `).join('');
+
+          // Vacunas
+          const contVac = document.getElementById('perfilVacunas');
+          contVac.innerHTML = !vacunas.length 
+            ? '<p class="perfil-empty">Sin vacunas registradas</p>'
+            : vacunas.map(v => `
+                <div class="perfil-item-row">
+                  <div>
+                    <strong>${v.vacuna || 'Vacuna'}</strong>
+                    <small>${v.fecha || ''}</small>
+                  </div>
+                  <p>${v.notas || ''}</p>
+                </div>
+              `).join('');
+        })
+        .catch(err => {
+          console.error(err);
+          document.body.innerHTML = '<p style="padding:2rem; text-align:center;">❌ Error cargando datos</p>';
+        });
+    }
+    // ========== LIGHTBOX FUNCTIONS ==========
+    function abrirLightbox(src, nombre) {
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const caption = document.getElementById('lightboxCaption');
+    
+    lightbox.style.display = 'flex';
+    lightboxImg.src = src;
+    caption.textContent = nombre;
+    
+    // Animación fade-in
+    setTimeout(() => {
+        lightbox.style.opacity = '1';
+    }, 10);
+    
+    // Prevenir scroll del body
+    document.body.style.overflow = 'hidden';
+    }
+
+    function cerrarLightbox() {
+    const lightbox = document.getElementById('lightbox');
+    lightbox.style.opacity = '0';
+    
+    setTimeout(() => {
+        lightbox.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }, 300);
+    }
+
+    // Cerrar con tecla ESC
+    document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        cerrarLightbox();
+    }
+    });
+
+    // Prevenir que el click en la imagen cierre el lightbox
+    document.getElementById('lightboxImg')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    });
+  </script>
+</body>
+</html>
