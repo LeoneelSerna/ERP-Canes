@@ -215,15 +215,15 @@ Password: admin123
 Próximamente: Agrega aquí screenshots del sistema
 ---
 ## 🔒 Seguridad
-✅ Contraseñas hasheadas con bcrypt (10 salt rounds)
-✅ Autenticación JWT con expiración de 7 días
-✅ Middleware de protección en todas las rutas API
-✅ Token almacenado en localStorage (no cookies)
-✅ Logout automático al expirar el token
-✅ Validación de archivos (solo imágenes, max 5MB)
-✅ Variables sensibles en .env (excluido de Git)
-✅ Prevención de SQL Injection con prepared statements
-✅ CORS configurado correctamente
+- ✅ Contraseñas hasheadas con bcrypt (10 salt rounds)
+- ✅ Autenticación JWT con expiración de 7 días
+- ✅ Middleware de protección en todas las rutas API
+- ✅ Token almacenado en localStorage (no cookies)
+- ✅ Logout automático al expirar el token
+- ✅ Validación de archivos (solo imágenes, max 5MB)
+- ✅ Variables sensibles en .env (excluido de Git)
+- ✅ Prevención de SQL Injection con prepared statements
+- ✅ CORS configurado correctamente
 ---
 ### 🚀 Roadmap
  ◻️ Exportar reportes a PDF/Excel
