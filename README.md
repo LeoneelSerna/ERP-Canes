@@ -21,8 +21,17 @@
 
 ### 🔐 Sistema de Autenticación
 - ✅ Login/Registro seguro con **bcrypt**
-- ✅ Sesiones persistentes con **express-session**
-- ✅ Protección de rutas privadas
+- ✅ Autenticación persistente con **JWT** (tokens de 7 días)
+- ✅ Sesión activa al cerrar y reabrir la app
+- ✅ Protección de rutas privadas con middleware JWT
+- ✅ Logout automático al expirar el token
+
+### 📱 PWA (Progressive Web App)
+- ✅ **Instalable** en Android e iOS desde el navegador
+- ✅ **Service Worker** registrado y activo
+- ✅ Pantalla completa al abrir desde ícono home
+- ✅ Compatible con HTTPS (ngrok/deploy)
+- ✅ Manifest configurado con íconos 192x512
 
 ### 🐾 Gestión de Perros K9
 - ✅ **CRUD completo** (Create, Read, Update, Delete)
@@ -45,9 +54,10 @@
 ### 🎨 Interfaz Moderna
 - ✅ Diseño **glassmorphism** oscuro
 - ✅ Totalmente **responsive** (móvil/tablet/desktop)
+- ✅ **Navbar con menú hamburguesa** en móvil
+- ✅ Fix **safe area iOS** (notch/Dynamic Island)
 - ✅ Animaciones suaves
 - ✅ Experiencia de usuario intuitiva
-
 ---
 
 ## 🛠️ Tecnologías
@@ -56,10 +66,12 @@
 |-----------|-----------|
 | **Backend** | Node.js + Express.js |
 | **Base de Datos** | MySQL 8.0 |
-| **Autenticación** | bcryptjs + express-session |
+| **Autenticación** | bcryptjs + JWT (jsonwebtoken) |
+| **Sesiones** | express-session |
 | **Upload** | Multer (fotos hasta 5MB) |
 | **Frontend** | HTML5 + CSS3 + JavaScript Vanilla |
 | **Estilos** | CSS Moderno (Flexbox/Grid) |
+| **PWA** | Service Worker + Web App Manifest |
 
 ---
 
@@ -81,6 +93,17 @@ cd ERP-Canes
 ```bash
 npm install
 ```
+| Paquete         | Versión | Uso                           |
+| --------------- | ------- | ----------------------------- |
+| express         | ^4.18.0 | Servidor web                  |
+| mysql2          | ^3.0.0  | Conexión a MySQL              |
+| bcryptjs        | ^2.4.3  | Encriptación de contraseñas   |
+| jsonwebtoken    | ^9.0.0  | Autenticación JWT persistente |
+| express-session | ^1.17.3 | Manejo de sesiones servidor   |
+| multer          | ^1.4.5  | Subida de fotos (max 5MB)     |
+| cors            | ^2.8.5  | Cross-Origin Resource Sharing |
+| dotenv          | ^16.0.0 | Variables de entorno          |
+| nodemon         | ^3.0.0  | Auto-reload en desarrollo     |
 
 ### 3️⃣ Configurar base de datos
 Crea la base de datos en MySQL:
@@ -193,15 +216,13 @@ Próximamente: Agrega aquí screenshots del sistema
 ---
 ## 🔒 Seguridad
 ✅ Contraseñas hasheadas con bcrypt (10 salt rounds)
-
-✅ Sesiones seguras con express-session
-
+✅ Autenticación JWT con expiración de 7 días
+✅ Middleware de protección en todas las rutas API
+✅ Token almacenado en localStorage (no cookies)
+✅ Logout automático al expirar el token
 ✅ Validación de archivos (solo imágenes, max 5MB)
-
 ✅ Variables sensibles en .env (excluido de Git)
-
 ✅ Prevención de SQL Injection con prepared statements
-
 ✅ CORS configurado correctamente
 ---
 ### 🚀 Roadmap
