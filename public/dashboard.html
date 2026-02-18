@@ -2,10 +2,17 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">  
   <title>Dashboard K9</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0f1419">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">  
   <link rel="stylesheet" href="style.css">
   <script src="/js/common.js"></script>
+  <script src="/js/api.js"></script>
 </head>
 <body>
   <div class="dashboard-container">
@@ -147,6 +154,28 @@
 </div>
   
   <script>
+    // ─── VERIFICAR SESIÓN ─────────────────────────────
+    (async function() {
+      const token = localStorage.getItem('k9_token');
+      if (!token) { window.location.href = '/'; return; }
+
+      try {
+        const res = await apiFetch('/api/auth/verify', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (!data.valid) {
+          localStorage.removeItem('k9_token');
+          localStorage.removeItem('k9_user');
+          window.location.href = '/';
+        }
+      } catch {
+        window.location.href = '/';
+      }
+    })();
+
+    //INICIO DE SCRIPTS
+
     // ========== INICIALIZAR DASHBOARD (usa funciones de common.js) ==========
     (async () => {
       await loadSessionData();    // De common.js
@@ -165,14 +194,14 @@
     let perrosData = [];
 
     async function cargarPerros() {
-      const res = await fetch('/api/perros');
+      const res = await apiFetch('/api/perros');
       const data = await res.json();
       document.getElementById('totalPerros').textContent = data.data?.length || 0;
     }
 
     async function listarPerros() {
       try {
-        const res = await fetch('/api/perros');
+        const res = await apiFetch('/api/perros');
         perrosData = await res.json();
         
         const lista = document.getElementById('perros-lista');
@@ -239,7 +268,7 @@
   }
   
   try {
-    const res = await fetch('/api/perros', {
+    const res = await apiFetch('/api/perros', {
       method: 'POST',
       body: formData  // Sin Content-Type (FormData lo maneja automáticamente)
     });

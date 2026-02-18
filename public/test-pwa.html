@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="/manifest.json">
+  <title>Test PWA</title>
+</head>
+<body>
+  <h1>Test PWA</h1>
+  <p id="estado">Verificando SW...</p>
+
+  <script>
+    console.log('🟡 Script cargado');
+
+    if ('serviceWorker' in navigator) {
+      console.log('🟡 serviceWorker disponible en navigator');
+
+      navigator.serviceWorker.register('/sw.js')
+        .then(function(reg) {
+          document.getElementById('estado').textContent = '✅ SW Registrado: ' + reg.scope;
+          console.log('✅ SW OK:', reg.scope);
+        })
+        .catch(function(err) {
+          document.getElementById('estado').textContent = '❌ ERROR: ' + err;
+          console.error('❌ ERROR SW:', err);
+        });
+
+    } else {
+      document.getElementById('estado').textContent = '❌ serviceWorker NO soportado';
+      console.log('❌ No hay serviceWorker en navigator');
+    }
+  </script>
+</body>
+</html>

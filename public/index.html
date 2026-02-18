@@ -2,8 +2,14 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">  
+  <title>ERP K9</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0f1419">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,99 +31,148 @@
     <div id="resultado"></div>
   </div>
 
-<script>
-const form = document.getElementById('loginForm');
-const formTitle = document.getElementById('formTitle');
-const submitBtn = document.getElementById('submitBtn');
-const toggleRegister = document.getElementById('toggleRegister');
-const resultado = document.getElementById('resultado');
-const emailInput = document.getElementById('email');
-const passwordInput = document.getElementById('password');
+  <script>
+    // ✅ Verificar token previo con manejo robusto
+    (async function verificarSesionPrevia() {
+      const token = localStorage.getItem('k9_token');
+      if (!token) return;
 
-let isLogin = true;
+      try {
+        const res = await fetch('/api/auth/verify', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
 
-function setMode(loginMode) {
-  isLogin = loginMode;
-  formTitle.textContent = isLogin ? 'Iniciar Sesión' : 'Registro';
-  submitBtn.textContent = isLogin ? 'Entrar' : 'Registrarse';
-  toggleRegister.textContent = isLogin ? 'Regístrate' : 'Inicia sesión';
-  resultado.innerHTML = '';
-}
+        // Verificar que la respuesta sea JSON (no HTML de ngrok o login)
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+          localStorage.removeItem('k9_token');
+          localStorage.removeItem('k9_user');
+          return;
+        }
 
-function resetForm() {
-  emailInput.value = '';
-  passwordInput.value = '';
-}
+        const data = await res.json();
+        if (data.valid) {
+          window.location.href = '/dashboard';
+        } else {
+          localStorage.removeItem('k9_token');
+          localStorage.removeItem('k9_user');
+        }
+      } catch (e) {
+        // Sin conexión o error → limpiar y mostrar login
+        localStorage.removeItem('k9_token');
+        localStorage.removeItem('k9_user');
+      }
+    })();
 
-toggleRegister.addEventListener('click', (e) => {
-  e.preventDefault();
-  setMode(!isLogin);
-});
+    const form = document.getElementById('loginForm');
+    const formTitle = document.getElementById('formTitle');
+    const submitBtn = document.getElementById('submitBtn');
+    const toggleRegister = document.getElementById('toggleRegister');
+    const resultado = document.getElementById('resultado');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
 
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
+    let isLogin = true;
 
-  const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-  const payload = {
-    email: emailInput.value.trim(),
-    password: passwordInput.value.trim()
-  };
+    function setMode(loginMode) {
+      isLogin = loginMode;
+      formTitle.textContent = isLogin ? 'Iniciar Sesión' : 'Registro';
+      submitBtn.textContent = isLogin ? 'Entrar' : 'Registrarse';
+      toggleRegister.textContent = isLogin ? 'Regístrate' : 'Inicia sesión';
+      resultado.innerHTML = '';
+    }
 
-  resultado.innerHTML = '<p class="info">Procesando...</p>';
+    function resetForm() {
+      emailInput.value = '';
+      passwordInput.value = '';
+    }
 
-  try {
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+    toggleRegister.addEventListener('click', (e) => {
+      e.preventDefault();
+      setMode(!isLogin);
     });
 
-    let data = {};
-    try {
-      data = await res.json();
-    } catch {
-      data = { message: 'Respuesta inválida del servidor' };
-    }
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
 
-    if (res.ok) {
-      if (isLogin) {
-        resultado.innerHTML = `<p class="success">${data.message || 'Login exitoso'}</p>`;
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 1500);
-      } else {
-        resultado.innerHTML = `
-          <p class="success">${data.message || 'Registro exitoso'}</p>
-          <p class="success" id="countdown" style="font-size: 14px;">
-            Cambiando a login en <span id="timer">5</span> segundos...
-          </p>
-        `;
+      // Deshabilitar botón para evitar doble submit
+      submitBtn.disabled = true;
+      submitBtn.textContent = isLogin ? 'Entrando...' : 'Registrando...';
 
-        let seconds = 5;
-        const timer = document.getElementById('timer');
-        const countdown = setInterval(() => {
-          seconds--;
-          timer.textContent = seconds;
+      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+      const payload = {
+        email: emailInput.value.trim(),
+        password: passwordInput.value.trim()
+      };
 
-          if (seconds <= 0) {
-            clearInterval(countdown);
-            setMode(true); // cambiar a login
-            resetForm();
-            resultado.innerHTML = '<p class="success">¡Ahora inicia sesión con tus datos!</p>';
+      resultado.innerHTML = '<p class="info">Procesando...</p>';
+
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        // Verificar que sea JSON
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+          resultado.innerHTML = '<p class="error">Error del servidor. Intenta de nuevo.</p>';
+          return;
+        }
+
+        let data = {};
+        try { data = await res.json(); }
+        catch { data = { message: 'Respuesta inválida del servidor' }; }
+
+        if (res.ok) {
+          if (isLogin) {
+            localStorage.setItem('k9_token', data.token);
+            localStorage.setItem('k9_user', JSON.stringify(data.user));
+
+            resultado.innerHTML = `<p class="success">${data.message || 'Login exitoso'}</p>`;
+            setTimeout(() => { window.location.href = '/dashboard'; }, 1000);
+
+          } else {
+            resultado.innerHTML = `
+              <p class="success">${data.message || 'Registro exitoso'}</p>
+              <p style="font-size:14px;">Cambiando a login en <span id="timer">5</span>s...</p>
+            `;
+            let seconds = 5;
+            const timerEl = document.getElementById('timer');
+            const countdown = setInterval(() => {
+              seconds--;
+              timerEl.textContent = seconds;
+              if (seconds <= 0) {
+                clearInterval(countdown);
+                setMode(true);
+                resetForm();
+                resultado.innerHTML = '<p class="success">¡Ahora inicia sesión!</p>';
+              }
+            }, 1000);
           }
-        }, 1000);
+        } else {
+          resultado.innerHTML = `<p class="error">${data.message || 'Ocurrió un error'}</p>`;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        resultado.innerHTML = '<p class="error">Error de conexión. Verifica tu red.</p>';
+      } finally {
+        // Re-habilitar botón siempre
+        submitBtn.disabled = false;
+        submitBtn.textContent = isLogin ? 'Entrar' : 'Registrarse';
       }
-    } else {
-      resultado.innerHTML = `<p class="error">${data.message || 'Ocurrió un error'}</p>`;
-    }
-  } catch (error) {
-    console.error('Error:', error);
-    resultado.innerHTML = '<p class="error">Error de conexión</p>';
-  }
-});
+    });
+  </script>
 
-</script>
-    
-    
+  <!-- PWA: Registro Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(r => console.log('✅ SW registrado:', r.scope))
+        .catch(e => console.error('❌ SW error:', e));
+    }
+  </script>
+
 </body>
 </html>

@@ -6,59 +6,31 @@ require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware
+// ─── Middleware global ─────────────────────────────
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'tu-secreto-super-seguro',
+  secret: process.env.SESSION_SECRET || 'secreto-k9',
   resave: false,
   saveUninitialized: false
 }));
 
-// Rutas
-app.use('/api/auth', require('./routes/auth'));
+// ─── Rutas públicas (auth) ─────────────────────────
+const authRoutes = require('./routes/auth');
+app.use('/api/auth', authRoutes);
 
-// Página principal
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
-});
+// ─── Rutas API protegidas con JWT ──────────────────
+const verificarToken = require('./middleware/authJWT');
+const perrosRoutes = require('./routes/api/perros');
+app.use('/api/perros', verificarToken, perrosRoutes);
 
-// Dashboard protegido
-app.get('/dashboard', (req, res) => {
-    if (!req.session.user) return res.redirect('/');
-    res.sendFile(__dirname + '/public/dashboard.html');
-  });
-  
-  app.get('/api/session', (req, res) => {
-    if (!req.session.user) return res.status(401).json({ error: 'No autenticado' });
-    res.json(req.session.user);
-  });
+// ─── Rutas HTML ────────────────────────────────────
+const viewRoutes = require('./routes/views');
+app.use('/', viewRoutes);
 
+// ─── Iniciar servidor ──────────────────────────────
 app.listen(port, () => {
-  console.log(`Servidor en http://localhost:${port}`);
-});
-// API Perros K9
-app.use('/api/perros', require('./routes/api/perros'));
-
-// Test conexión DB
-app.get('/api/test-db', async (req, res) => {
-  const pool = require('./models/database');
-  try {
-    const connection = await pool.getConnection();
-    await connection.ping();
-    connection.release();
-    res.json({ success: true, message: 'MySQL ics_k9 conectado ✅' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Admin panel PROTEGIDO
-app.get('/admin', (req, res) => {
-  if (!req.session.user) {
-    return res.redirect('/');
-  }
-  res.sendFile(__dirname + '/public/admin.html');
+  console.log(`✅ Servidor en http://localhost:${port}`);
 });

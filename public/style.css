@@ -1059,3 +1059,108 @@ body:has(.perfil-wrapper) {
     max-height: 85%;
   }
 }
+
+/* PWA - Pantalla completa */
+@media all and (display-mode: fullscreen) {
+  body { margin: 0; padding: 0; }
+}
+
+/* ========== NAVBAR HAMBURGUESA (MÓVIL) ========== */
+.nav-hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: #4ecca3;
+  font-size: 1.8rem;
+  cursor: pointer;
+  padding: 0;
+  width: auto;
+  min-width: unset;
+  margin: 0;
+  box-shadow: none;
+  transform: none !important;
+}
+
+.nav-hamburger:hover {
+  background: none;
+  box-shadow: none;
+  transform: none !important;
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  /* Mostrar hamburguesa */
+  .nav-hamburger {
+    display: block;
+  }
+
+  /* Ocultar menú por defecto en móvil */
+  .nav-right {
+    display: none !important;
+    flex-direction: column;
+    align-items: stretch;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    background: rgba(22, 33, 62, 0.98);
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    gap: 0.5rem;
+    backdrop-filter: blur(15px);
+    z-index: 999;
+  }
+
+  /* Mostrar menú cuando está abierto */
+  .nav-right.nav-open {
+    display: flex !important;
+  }
+
+  /* Botones a ancho completo en móvil */
+  .nav-btn,
+  button.nav-btn,
+  a.nav-btn {
+    width: 100%;
+    padding: 14px 20px;
+    font-size: 15px;
+    min-width: unset;
+    text-align: center;
+  }
+
+  /* Email del usuario */
+  .nav-email {
+    display: block;
+    color: rgba(255,255,255,0.6);
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* ========== iOS SAFE AREA (notch/dynamic island) ========== */
+
+/* Navbar respeta el área segura superior */
+.admin-nav {
+  padding-top: env(safe-area-inset-top, 0px);
+  height: calc(60px + env(safe-area-inset-top, 0px));
+  top: 0;
+}
+
+/* El body empuja el contenido debajo del navbar + safe area */
+body {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Páginas con navbar fijo (dashboard, admin, perro) */
+body:has(.dashboard-container),
+body:has(.admin-container),
+body:has(.perfil-wrapper) {
+  padding-top: calc(60px + env(safe-area-inset-top, 0px));
+}
+
+/* Safe area inferior (barra home de iPhone) */
+body {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}

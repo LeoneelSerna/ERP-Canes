@@ -21,3 +21,7 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+#Vistas de Prueba
+public\test-pwa.html
+READMEDATA.MD
